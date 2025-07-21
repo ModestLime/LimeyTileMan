@@ -14,8 +14,14 @@ gradle-app.setting
 # Cache of project
 .gradletasknamecache
 
-# Eclipse Gradle plugin generated files
-# Eclipse Core
+# Eclipse/NetBeans IDE files
 .project
-# JDT-specific (Eclipse Java Development Tools)
+.settings/
 .classpath
+nbactions.xml
+nb-configuration.xml
+nbproject/
+
+# IntelliJ IDEA files
+.idea/
+
