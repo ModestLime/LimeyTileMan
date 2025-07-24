@@ -26,11 +26,6 @@ dependencies {
 	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11) // Specify Java 11
-    }
-}
 
 group = 'com.modestlime.limeytileman'
 version = '1.0-SNAPSHOT'
