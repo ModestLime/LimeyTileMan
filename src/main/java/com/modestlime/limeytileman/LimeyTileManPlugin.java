@@ -35,6 +35,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
@@ -61,7 +62,6 @@ import java.io.IOException;
 import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Timer;
 import java.util.stream.Collectors;
@@ -129,7 +129,7 @@ public class LimeyTileManPlugin extends Plugin{
 
     public HashMap<Integer, List<WorldPoint>> markedTiles;
 
-    private static final Path tileManDir = Paths.get(System.getProperty("user.home"), ".runelite" , "TileMan");
+    private static final Path tileManDir = RuneLite.RUNELITE_DIR.toPath().resolve("TileMan");
 
     private Path currentProfileFile;
 
