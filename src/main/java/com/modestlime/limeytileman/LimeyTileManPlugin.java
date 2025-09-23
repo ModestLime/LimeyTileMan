@@ -600,6 +600,16 @@ public class LimeyTileManPlugin extends Plugin{
         availableTiles -= markedTileCount;
     }
 
+    private boolean isBlocked(WorldView wv,LocalPoint lp){
+        CollisionData[] collisionData = wv.getCollisionMaps();
+        if(collisionData != null) {
+            int[][] flags = collisionData[wv.getPlane()].getFlags();
+            int movementFlag = flags[lp.getSceneX()][lp.getSceneY()];
+            return (movementFlag & CollisionDataFlag.BLOCK_MOVEMENT_FULL) != 0;
+        }
+        return true;
+    }
+
     /**
      *
      * @param point a normal {@link WorldPoint} to be added to markedTiles
@@ -608,8 +618,8 @@ public class LimeyTileManPlugin extends Plugin{
         WorldView wv = client.getTopLevelWorldView();
         LocalPoint lp = LocalPoint.fromWorld(wv, point);
         if(lp == null){return;}
+        if(isBlocked(wv,lp)){return;}
         point = WorldPoint.fromLocalInstance(client, lp, wv.getPlane());
-
         WorldPoint regionID = toRegion(point);
         List<WorldPoint> regionTiles = markedTiles.get(toHash(regionID));
         if(regionTiles == null){

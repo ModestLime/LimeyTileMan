@@ -54,7 +54,7 @@ public class LimeyTileManOverlay extends Overlay{
         this.plugin = plugin;
         setPosition(OverlayPosition.DYNAMIC);
         setLayer(OverlayLayer.ABOVE_SCENE);
-        setPriority(PRIORITY_LOW);
+        setPriority(-1.0f);
 
         combinedToRender = new Path2D.Float();
         combinedOneClickTiles = new Path2D.Float();
