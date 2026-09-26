@@ -32,9 +32,9 @@ import net.runelite.api.Menu;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.ClientTick;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.api.events.*;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -64,6 +64,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Timer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -123,6 +125,8 @@ public class LimeyTileManPlugin extends Plugin{
 
     public long availableTiles;
 
+    public long collectionClogs;
+
     private WorldPoint lastWorldPoint;
 
     public boolean easyDeleteMode;
@@ -155,6 +159,8 @@ public class LimeyTileManPlugin extends Plugin{
     private static final String gpuPluginName = "GPU";
     private static final String hdGpuPluginName = "117 HD";
 
+    private static final Pattern collectionLogPattern = Pattern.compile("(\\d+)/");
+
 
     @Override
     protected void startUp() throws Exception
@@ -173,6 +179,7 @@ public class LimeyTileManPlugin extends Plugin{
         markedTileCount = 0;
         xpToNextTile = 0;
         availableTiles = 0;
+        collectionClogs = 0;
         easyDeleteMode = false;
         tileColor = config.tileColor();
 
@@ -339,6 +346,61 @@ public class LimeyTileManPlugin extends Plugin{
     }
 
 
+    @Subscribe
+    public void onChatMessage(ChatMessage event) {
+        if (event.getType() != ChatMessageType.GAMEMESSAGE
+                && event.getType() != ChatMessageType.SPAM
+                && event.getType() != ChatMessageType.TRADE
+                && event.getType() != ChatMessageType.FRIENDSCHATNOTIFICATION) {
+            return;
+        }
+        String chatMessage = event.getMessage();
+        if (chatMessage.startsWith("New item added to your collection log: ")){
+            collectionClogs += 1;
+            clientThread.invoke(this::updateTileInfo);
+        }
+
+    }
+
+    public void updateClogsFromCollectionTxt(String str){
+        Matcher m = collectionLogPattern.matcher(str);
+        if(m.find()) {
+            int clogs = Integer.parseInt(m.group(1));
+            if (clogs != collectionClogs){
+                collectionClogs = clogs;
+            }
+        }
+    }
+    
+    @Subscribe
+    public void onScriptPostFired(ScriptPostFired event){
+        if (event.getScriptId() == ScriptID.COLLECTION_DRAW_LIST){
+            Widget collectionLogFrame = client.getWidget(InterfaceID.Collection.FRAME);
+            if (collectionLogFrame != null) {
+                Widget titleFrame = collectionLogFrame.getChild(1);
+                if (titleFrame != null) {
+                    updateClogsFromCollectionTxt(titleFrame.getText()); //Collection Log - 37/1717
+
+                }
+            }
+        }
+        if(event.getScriptId() == 3427){ //3427 is the last script that runs after opening the account summary side panel
+            Widget accountSummaryContents = client.getWidget(InterfaceID.AccountSummarySidepanel.SUMMARY_CONTENTS);
+            if(accountSummaryContents != null) {
+                Widget[] contents = accountSummaryContents.getChildren();
+                if (contents != null) {
+                    for (int i = 0; i < contents.length; i++) {
+                        if (Objects.equals(contents[i].getText(), "Collections Logged:")) {
+                            updateClogsFromCollectionTxt(contents[i + 1].getText()); //<col=0dc10d>37/1717</col>
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+    
     public void generateToRender(){
         Player player = client.getLocalPlayer();
         if(player != null) {
@@ -596,6 +658,9 @@ public class LimeyTileManPlugin extends Plugin{
         if(config.addTileOnLevel()){
             availableTiles += (long) client.getTotalLevel() * config.tilesPerLevel();
         }
+        if(config.addTileOnClog()){
+            availableTiles += collectionClogs * config.tilesPerClog();
+        }
         availableTiles += config.addTiles();
         availableTiles -= config.subtractTiles();
         availableTiles -= markedTileCount;
@@ -725,6 +790,7 @@ public class LimeyTileManPlugin extends Plugin{
         }
 
         markedTiles = gson.fromJson(json, new TypeToken<HashMap<Integer, List<WorldPoint>>>(){}.getType());
+        markedTileCount = 0;
         for( List<WorldPoint> region: markedTiles.values()){
             markedTileCount += region.size();
 

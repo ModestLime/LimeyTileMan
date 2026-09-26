@@ -295,7 +295,23 @@ public interface LimeyTileManConfig extends Config{
     )
     default int tilesPerLevel(){return 1;}
 
+    @ConfigItem(
+            keyName = "addTileOnClog",
+            name = "Add Tiles for Collection Logs",
+            description = "Adds Tiles Based on Collection Log Slots (Open the collection log to sync)",
+            section = gameModeSection,
+            position = 207
+    )
+    default boolean addTileOnClog(){return false;}
 
+    @ConfigItem(
+            keyName = "tilesPerClog",
+            name = "Tiles added per Collection Log",
+            description = "Amount of tiles to add per Collection Log",
+            section = gameModeSection,
+            position = 208
+    )
+    default int tilesPerClog(){return 25;}
 
 
 }
