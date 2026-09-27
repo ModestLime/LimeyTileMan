@@ -347,6 +347,19 @@ public class LimeyTileManPlugin extends Plugin{
 
 
     @Subscribe
+    public void onGameStateChanged(GameStateChanged event){
+        if(event.getGameState() == GameState.LOGGED_IN){
+            String clogs = configManager.getRSProfileConfiguration(LimeyTileManConfig.GROUP, "clogs");
+            if(clogs != null){
+                collectionClogs = Long.parseLong(clogs);
+            }else{
+                collectionClogs = 0;
+                configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "clogs", 0);
+            }
+        }
+    }
+
+    @Subscribe
     public void onChatMessage(ChatMessage event) {
         if (event.getType() != ChatMessageType.GAMEMESSAGE
                 && event.getType() != ChatMessageType.SPAM
@@ -357,6 +370,7 @@ public class LimeyTileManPlugin extends Plugin{
         String chatMessage = event.getMessage();
         if (chatMessage.startsWith("New item added to your collection log: ")){
             collectionClogs += 1;
+            configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "clogs", collectionClogs);
             clientThread.invoke(this::updateTileInfo);
         }
 
@@ -368,6 +382,7 @@ public class LimeyTileManPlugin extends Plugin{
             int clogs = Integer.parseInt(m.group(1));
             if (clogs != collectionClogs){
                 collectionClogs = clogs;
+                configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "clogs", collectionClogs);
             }
         }
     }
