@@ -50,6 +50,7 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.events.ClientShutdown;
+import net.runelite.client.util.Filepath;
 import net.runelite.client.util.ImageUtil;
 
 import javax.annotation.Nonnull;
@@ -59,9 +60,9 @@ import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Timer;
 import java.util.regex.Matcher;
@@ -133,9 +134,9 @@ public class LimeyTileManPlugin extends Plugin{
 
     public HashMap<Integer, List<WorldPoint>> markedTiles;
 
-    private static final Path tileManDir = RuneLite.RUNELITE_DIR.toPath().resolve("TileMan");
+    private static final Filepath tileManDir = Filepath.Unchecked.getLegacyPluginDirectory(RuneLite.RUNELITE_DIR.toPath(), "TileMan");
 
-    private Path currentProfileFile;
+    private Filepath currentProfileFile;
 
     public Color tileColor;
 
@@ -169,9 +170,9 @@ public class LimeyTileManPlugin extends Plugin{
         log.warn("limey tile man started!");
 //        log.info(String.valueOf(configManager.getProfile().getId()));
 
-        Files.createDirectories(tileManDir);
+        tileManDir.createDirectories();
 
-        currentProfileFile = tileManDir.resolve(configManager.getProfile().getId() + ".json");
+        currentProfileFile = tileManDir.joinSegment(configManager.getProfile().getId() + ".json");
         lastWorldPoint = null;
         markedTiles = new HashMap<>();
         toRender = new ArrayList<>();
@@ -251,7 +252,7 @@ public class LimeyTileManPlugin extends Plugin{
     public void onProfileChanged(ProfileChanged event)
     {
         savePoints();
-        currentProfileFile = tileManDir.resolve(configManager.getProfile().getId() + ".json");
+        currentProfileFile = tileManDir.joinSegment(configManager.getProfile().getId() + ".json");
         markedTiles = new HashMap<>();
         loadPoints();
     }
@@ -283,9 +284,9 @@ public class LimeyTileManPlugin extends Plugin{
 
     @Subscribe
     public void onConfigChanged(ConfigChanged configChanged){    //onConfigChanged isn't on the client thread
-        if(configChanged.getGroup().equals(config.GROUP)){
+        if(configChanged.getGroup().equals(LimeyTileManConfig.GROUP)){
             updateTileInfo();
-            if(configChanged.getKey().equals(config.AutoMark)){
+            if(configChanged.getKey().equals(LimeyTileManConfig.AutoMark)){
                 if(configChanged.getNewValue() == null){ //this happens on a brand-new profile creation
                     return;
                 }
@@ -294,7 +295,7 @@ public class LimeyTileManPlugin extends Plugin{
                     clientThread.invokeLater(this::placeTileUnderPlayer); //overkill but now it marks the tile right away instead of after you move when you just enable it
                 }
             }
-            if(configChanged.getKey().equals(config.RenderDistance)){
+            if(configChanged.getKey().equals(LimeyTileManConfig.RenderDistance)){
                 clientThread.invokeLater((Runnable) this::generateToRender);
             }
         }
@@ -785,7 +786,7 @@ public class LimeyTileManPlugin extends Plugin{
     private void savePoints(){
         String json = gson.toJson(markedTiles);
         try{
-            Files.writeString(currentProfileFile, json);
+            currentProfileFile.write(json);
         }catch (IOException e){
             log.error("error writing to file ", e);
         }
@@ -794,12 +795,12 @@ public class LimeyTileManPlugin extends Plugin{
 
 
     private void loadPoints(){
-        if(!Files.exists(currentProfileFile)){
+        if(!currentProfileFile.exists()){
             savePoints();
         }
         String json = "";
-        try {
-            json = Files.readString(currentProfileFile);
+        try (InputStream in = currentProfileFile.openInputStream()){
+            json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }catch (IOException e){
             log.error("error reading file ", e);
         }

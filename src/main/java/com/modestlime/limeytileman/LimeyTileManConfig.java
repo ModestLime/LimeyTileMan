@@ -298,7 +298,7 @@ public interface LimeyTileManConfig extends Config{
     @ConfigItem(
             keyName = "addTileOnClog",
             name = "Add Tiles for Collection Logs",
-            description = "Adds Tiles Based on Collection Log Slots (Open the collection log to sync)",
+            description = "Adds Tiles Based on Collection Log Slots (Open the collection log to sync and enable \"collection log - New addition notification\" in Runescapes settings)",
             section = gameModeSection,
             position = 207
     )
