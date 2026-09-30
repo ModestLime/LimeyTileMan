@@ -35,7 +35,6 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
@@ -72,7 +71,10 @@ import java.util.stream.Collectors;
 
 @PluginDescriptor(
         name = "Limey Tile Man",
-        description = "A Fast and Efficient TileMan Plugin With Extra Features"
+        description = "A Fast and Efficient TileMan Plugin With Extra Features",
+        tags = {"tileman","tile","lime"},
+        legacyDataDirectory = "TileMan",
+        internalName = "LimeyTileMan"
 )
 @Slf4j
 public class LimeyTileManPlugin extends Plugin{
@@ -134,7 +136,7 @@ public class LimeyTileManPlugin extends Plugin{
 
     public HashMap<Integer, List<WorldPoint>> markedTiles;
 
-    private static final Filepath tileManDir = Filepath.Unchecked.getLegacyPluginDirectory(RuneLite.RUNELITE_DIR.toPath(), "TileMan");
+    private static Filepath tileManDir = null;
 
     private Filepath currentProfileFile;
 
@@ -146,7 +148,7 @@ public class LimeyTileManPlugin extends Plugin{
 
     private LimeyTileManPanel limeyTileManPanel;
 
-    private java.util.Timer autoSaveTimer;
+    private Timer autoSaveTimer;
 
     @Inject
     private PluginManager pluginManager;
@@ -169,7 +171,7 @@ public class LimeyTileManPlugin extends Plugin{
 
         log.warn("limey tile man started!");
 //        log.info(String.valueOf(configManager.getProfile().getId()));
-
+        tileManDir = getPluginDirectory();
         tileManDir.createDirectories();
 
         currentProfileFile = tileManDir.joinSegment(configManager.getProfile().getId() + ".json");
