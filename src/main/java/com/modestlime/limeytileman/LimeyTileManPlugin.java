@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
         description = "A Fast and Efficient TileMan Plugin With Extra Features",
         tags = {"tileman","tile","lime"},
         legacyDataDirectory = "TileMan",
-        internalName = "LimeyTileMan"
+        internalName = "limeytileman"
 )
 @Slf4j
 public class LimeyTileManPlugin extends Plugin{
