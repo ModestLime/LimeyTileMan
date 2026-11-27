@@ -313,5 +313,23 @@ public interface LimeyTileManConfig extends Config{
     )
     default int tilesPerClog(){return 25;}
 
+    @ConfigItem(
+            keyName = "addTileOnQuest",
+            name = "Add Tiles for Quests Completed",
+            description = "Adds Tiles Based on Number of Quests Completed",
+            section = gameModeSection,
+            position = 209
+    )
+    default boolean addTileOnQuest(){return false;}
+
+    @ConfigItem(
+            keyName = "tilesPerQuest",
+            name = "Tiles added per Quest Completed",
+            description = "Amount of tiles to add per Quest Completed",
+            section = gameModeSection,
+            position = 210
+    )
+    default int tilesPerQuest(){return 25;}
+
 
 }

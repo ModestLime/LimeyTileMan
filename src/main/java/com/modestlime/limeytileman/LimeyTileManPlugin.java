@@ -130,6 +130,8 @@ public class LimeyTileManPlugin extends Plugin{
 
     public long collectionClogs;
 
+    public long questsComplete;
+
     private WorldPoint lastWorldPoint;
 
     public boolean easyDeleteMode;
@@ -162,7 +164,7 @@ public class LimeyTileManPlugin extends Plugin{
     private static final String gpuPluginName = "GPU";
     private static final String hdGpuPluginName = "117 HD";
 
-    private static final Pattern collectionLogPattern = Pattern.compile("(\\d+)/");
+    private static final Pattern numSlashnumPattern = Pattern.compile("(\\d+)/");
 
 
     @Override
@@ -183,6 +185,7 @@ public class LimeyTileManPlugin extends Plugin{
         xpToNextTile = 0;
         availableTiles = 0;
         collectionClogs = 0;
+        questsComplete = 0;
         easyDeleteMode = false;
         tileColor = config.tileColor();
 
@@ -359,6 +362,14 @@ public class LimeyTileManPlugin extends Plugin{
                 collectionClogs = 0;
                 configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "clogs", 0);
             }
+
+            String questsDone = configManager.getRSProfileConfiguration(LimeyTileManConfig.GROUP, "questsDone");
+            if(questsDone != null){
+                questsComplete = Long.parseLong(questsDone);
+            }else{
+                questsComplete = 0;
+                configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "questsDone", 0);
+            }
         }
     }
 
@@ -377,10 +388,17 @@ public class LimeyTileManPlugin extends Plugin{
             clientThread.invoke(this::updateTileInfo);
         }
 
+        if (chatMessage.contains("Congratulations! Quest complete!") ||
+            chatMessage.contains("you've completed a quest")){
+            questsComplete += 1;
+            configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "questsDone", questsComplete);
+            clientThread.invoke(this::updateTileInfo);
+        }
+
     }
 
     public void updateClogsFromCollectionTxt(String str){
-        Matcher m = collectionLogPattern.matcher(str);
+        Matcher m = numSlashnumPattern.matcher(str);
         if(m.find()) {
             int clogs = Integer.parseInt(m.group(1));
             if (clogs != collectionClogs){
@@ -389,6 +407,20 @@ public class LimeyTileManPlugin extends Plugin{
             }
         }
     }
+
+    public void updateQuestsDoneFromTxt(String str){
+        Matcher m = numSlashnumPattern.matcher(str);
+        if(m.find()) {
+            int questsDone = Integer.parseInt(m.group(1));
+            if (questsDone != questsComplete){
+                questsComplete = questsDone;
+                configManager.setRSProfileConfiguration(LimeyTileManConfig.GROUP, "questsDone", questsComplete);
+            }
+        }
+
+
+    }
+
     
     @Subscribe
     public void onScriptPostFired(ScriptPostFired event){
@@ -416,6 +448,12 @@ public class LimeyTileManPlugin extends Plugin{
                 }
             }
 
+        }
+        if(event.getScriptId() == 4030){ //4030 is Questlist.COMPLETED  (technically 1355 is last to fire and that's Questlist.QUESTPOINTS but im not getting that)
+            Widget questListCompleted = client.getWidget(InterfaceID.Questlist.COMPLETED);
+            if(questListCompleted != null) {
+                updateQuestsDoneFromTxt(questListCompleted.getText());
+            }
         }
     }
     
@@ -678,6 +716,9 @@ public class LimeyTileManPlugin extends Plugin{
         }
         if(config.addTileOnClog()){
             availableTiles += collectionClogs * config.tilesPerClog();
+        }
+        if(config.addTileOnQuest()){
+            availableTiles += questsComplete * config.tilesPerQuest();
         }
         availableTiles += config.addTiles();
         availableTiles -= config.subtractTiles();
